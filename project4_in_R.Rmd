@@ -1,0 +1,166 @@
+---
+title: "General Assembly DSI Project 4 in R"
+output: html_notebook
+author: Isaac Moore
+---
+
+```{r}
+setwd("~/Google Drive/data_science/general_assembly/Projects/DSI_SM_Project4")
+```
+  
+Load the tidyverse and other libraries
+```{r}
+library("tidyverse")
+library("rvest")
+require(scales)
+```
+  
+
+```{r}
+test <- read_html("https://www.indeed.com/jobs?q=data+analyst&l=Austin%2C+TX") %>%
+        html_nodes("div h2") %>%
+        html_text()
+test
+
+```
+
+Using the example dataset provided.
+
+```{r}
+raw_data <- read_csv("indeed-scraped-job-postings.csv")
+df <- raw_data
+head(df)
+
+```
+
+
+```{r}
+nrow(df)
+ncol(df)
+```
+
+```{r}
+df %>% filter(!is.na(parsed_salary)) %>%
+        group_by(city) %>% 
+        summarise(mean_salary = mean(parsed_salary))
+```
+
+```{r}
+# avg_salary <- mean(subset(df, !is.na(parsed_salary))$parsed_salary)
+a <- which(is.na(df$parsed_salary))
+df[a, ]
+```
+
+```{r}
+# weekdays <- 52*5
+# salary <- (650+900) / 2
+# fill_salary <- weekdays * salary
+# df[a, ]$parsed_salary <- fill_salary
+```
+
+Omit na's from the dataframe.
+```{r}
+df2 <- df %>% na.omit()
+nrow(df2)
+ncol(df2)
+```
+Not many rows dropped.
+
+```{r}
+df2 %>% group_by(city) %>% 
+        summarise(mean_salary = mean(parsed_salary))
+```
+
+Compare salarys by removing duplicate rows in the dataframe.
+```{r}
+df2 %>% distinct() %>% group_by(city) %>% summarise(mean_salary = mean(parsed_salary))
+```
+
+remove duplicate rows
+```{r}
+df3 <- df2 %>% distinct()
+nrow(df3)
+ncol(df3)
+```
+dropped a lot of rows!
+
+### Checking the descrpencies between Austin/Seattle and the other states.
+```{r}
+df3%>% filter(city == "Austin")
+```
+Monthly salaries are mixed in with Yearly salaries. 
+
+
+*I'll make a function for any parsed salary that is less than $15,000 to multiply by 12 to calculate yearly salary.*
+```{r, echo=TRUE}
+year_salary <- function(x){
+        # Take in a vector (column) and iterate through each element in the vector.
+        out <- 0
+        vec <- c()
+        for(i in x){
+                if(i <= 15000){
+                        vec <- c(vec,(i * 12))
+                } else{
+                        vec <- c(vec, i)
+                }
+        }
+        return(vec)
+}
+df3$wage <- year_salary(df3$parsed_salary)
+```
+
+
+```{r}
+df3 %>% select(parsed_salary, wage)
+```
+
+```{r}
+df3 %>% group_by(city) %>% summarise(avg_salary = mean(wage))
+```
+
+
+```{r}
+avg_salary_city <- df3 %>%
+        group_by(city) %>% 
+        summarise(mean_salary = mean(wage))
+# avg_salary_city
+ggplot(avg_salary_city, aes(city, mean_salary)) + 
+        geom_bar(stat="identity") + 
+        coord_flip() + 
+        scale_y_continuous(labels = comma) + 
+        labs(title="Average salaries per city", y="Average Salary", x="City")
+```
+
+```{r}
+df3 %>% ggplot(aes(city, wage)) + 
+        geom_boxplot() + 
+        scale_y_continuous(labels = comma) + 
+        labs(title="Distribution of salaries per city", x="City", y="Yearly Salary")
+# boxplot(df2$parsed_salary ~ df2$city)
+```
+
+```{r}
+# df3 %>% ggplot(aes(wage)) + 
+#         geom_histogram(binwidth = 12) + 
+#         # scale_x_continuous(labels = comma)
+hist(df3$wage, breaks = 12, xlab = "Yearly Salary", main = "Frequency of Yealry Salaries")
+```
+
+
+```{r}
+summary(df3$wage)
+```
+
+### Lets build a modle to prdict whether the salary will be high or low based off of the City.
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
