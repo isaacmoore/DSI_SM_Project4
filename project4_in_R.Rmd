@@ -17,11 +17,15 @@ require(scales)
   
 
 ```{r}
-test <- read_html("https://www.indeed.com/jobs?q=data+analyst&l=Austin%2C+TX") %>%
-        html_nodes("div h2") %>%
+test <- read_html("https://www.indeed.com/jobs?q=data+analyst&l=Los+Angeles%2C+CA") %>%
+        html_nodes(xpath = '//*[row result"]') %>% 
         html_text()
 test
 
+# cast <- lego_movie %>%
+#   html_nodes("#titleCast .itemprop span") %>%
+#   html_text()
+# cast
 ```
 
 Using the example dataset provided.
@@ -143,7 +147,7 @@ df3 %>% ggplot(aes(city, wage)) +
 # df3 %>% ggplot(aes(wage)) + 
 #         geom_histogram(binwidth = 12) + 
 #         # scale_x_continuous(labels = comma)
-hist(df3$wage, breaks = 12, xlab = "Yearly Salary", main = "Frequency of Yealry Salaries")
+hist(df3$wage, breaks = 9, xlab = "Yearly Salary", main = "Frequency of Yealry Salaries")
 ```
 
 
@@ -151,13 +155,37 @@ hist(df3$wage, breaks = 12, xlab = "Yearly Salary", main = "Frequency of Yealry 
 summary(df3$wage)
 ```
 
-### Lets build a modle to prdict whether the salary will be high or low based off of the City.
-
+### Lets build a model to prdict whether the salary will be high or low based off of the City.  
+**We want to predict a binary variable - whether the salary was low or high. Compute the median salary and create a new binary variable that is true when the salary is high (above the median)**
 ```{r}
-
+#df3$above_median <- l
 ```
 
+Find which columns are above the median
+```{r}
+#which(df3$wage > median(df3$wage))
+above_median <- function(x){
+        med <- median(df3$wage)
+        if(x > med){
+                return(1)
+        } else {
+                return(0)
+        }
+}
+df3$above_median <- sapply(df3$wage, above_median)
+table(df3$above_median)
+```
 
+Thought experiment: What is the baseline accuracy for this model?
+```{r}
+mean(df3$above_median)
+```
+
+Create a Logistic Regression model to predict High/Low salary using statsmodel. Start by ONLY using the location as a feature. Display the coefficients and write a short summary of what they mean.
+```{r}
+model <- glm(formula = "above_median ~ city", family = binomial(link = "logit"), data = df3)
+summary(model)
+```
 
 
 
